@@ -2,12 +2,20 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { localRepository } from "./local.ts";
 
-test("storage repository returns default categories", async () => {
+test("storage repository returns default categories and deletes category", async () => {
   const categories = await localRepository.getCategories();
   assert.ok(categories.length >= 8);
   const makan = categories.find((c) => c.name === "Makan & Minum");
   assert.ok(makan);
   assert.equal(makan.budget_sen, 80000); // RM 800
+
+  // Create a temporary category and delete it
+  const temp = await localRepository.createCategory("Temporary");
+  assert.equal(temp.name, "Temporary");
+
+  await localRepository.deleteCategory(temp.id);
+  const updatedCats = await localRepository.getCategories();
+  assert.ok(!updatedCats.some((c) => c.id === temp.id));
 });
 
 test("storage repository creates and queries expenses", async () => {

@@ -3,13 +3,14 @@
 import React, { useState, useMemo } from "react";
 import { Category, Expense } from "@/types";
 import { formatMYR, parseMYRInput, fromSen } from "@/lib/money";
-import { Edit2, Check, X, Plus } from "lucide-react";
+import { Edit2, Check, X, Plus, Trash2 } from "lucide-react";
 
 interface CategoryBudgetsProps {
   categories: Category[];
   expenses: Expense[];
   onSaveBudget: (categoryId: string, budgetSen: number | null) => Promise<void>;
   onCreateCategory: (name: string) => Promise<void>;
+  onDeleteCategory: (id: string) => Promise<void>;
 }
 
 export function CategoryBudgets({
@@ -17,11 +18,14 @@ export function CategoryBudgets({
   expenses,
   onSaveBudget,
   onCreateCategory,
+  onDeleteCategory,
 }: CategoryBudgetsProps) {
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [budgetInput, setBudgetInput] = useState<string>("");
   const [isNewCategoryOpen, setIsNewCategoryOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -109,6 +113,18 @@ export function CategoryBudgets({
     }
   };
 
+  const handleDeleteCategory = async (id: string) => {
+    setIsDeletingId(id);
+    try {
+      await onDeleteCategory(id);
+      setConfirmDeleteId(null);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to delete category");
+    } finally {
+      setIsDeletingId(null);
+    }
+  };
+
   return (
     <div className="space-y-3 sm:space-y-4">
       {/* Top Header */}
@@ -176,6 +192,7 @@ export function CategoryBudgets({
             !isOverBudget &&
             cat.percentage !== null &&
             cat.percentage >= 80;
+          const isUncategorized = cat.id === "uncategorized";
 
           return (
             <div
@@ -195,15 +212,46 @@ export function CategoryBudgets({
                   </div>
                 </div>
 
-                {!isEditing && (
-                  <button
-                    onClick={() => handleStartEdit(cat)}
-                    className="rounded-lg p-2 text-[var(--muted)] hover:bg-[var(--muted-bg)] hover:text-[var(--foreground)] active:scale-95"
-                    title="Edit Monthly Budget"
-                    aria-label="Edit Monthly Budget"
-                  >
-                    <Edit2 className="h-3.5 w-3.5" />
-                  </button>
+                {!isEditing && !isUncategorized && (
+                  confirmDeleteId === cat.id ? (
+                    <div className="flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-1 dark:border-red-900/60 dark:bg-red-950/60 animate-in fade-in">
+                      <span className="text-[11px] font-medium text-red-700 dark:text-red-400">
+                        Delete?
+                      </span>
+                      <button
+                        onClick={() => handleDeleteCategory(cat.id)}
+                        disabled={isDeletingId === cat.id}
+                        className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white hover:bg-red-700 active:scale-95"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="px-1 text-[10px] text-[var(--muted)] hover:text-[var(--foreground)]"
+                      >
+                        No
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleStartEdit(cat)}
+                        className="rounded-lg p-1.5 text-[var(--muted)] hover:bg-[var(--muted-bg)] hover:text-[var(--foreground)] active:scale-95"
+                        title="Edit Monthly Budget"
+                        aria-label="Edit Monthly Budget"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(cat.id)}
+                        className="rounded-lg p-1.5 text-[var(--muted)] hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40 dark:hover:text-red-400 active:scale-95"
+                        title="Delete Category"
+                        aria-label="Delete Category"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  )
                 )}
               </div>
 

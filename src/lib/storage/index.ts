@@ -79,6 +79,22 @@ export const storage: StorageRepository = {
     }
   },
 
+  async deleteCategory(id: string): Promise<void> {
+    if (!isSupabaseConfigured || !supabase) {
+      return localRepository.deleteCategory(id);
+    }
+
+    try {
+      const { error } = await supabase.from("categories").delete().eq("id", id);
+      if (error) {
+        console.warn("Supabase deleteCategory fallback", error);
+        return localRepository.deleteCategory(id);
+      }
+    } catch {
+      return localRepository.deleteCategory(id);
+    }
+  },
+
   async getExpenses(options?: { month?: string; categoryId?: string }): Promise<Expense[]> {
     if (!isSupabaseConfigured || !supabase) {
       return localRepository.getExpenses(options);

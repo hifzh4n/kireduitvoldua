@@ -59,6 +59,7 @@ export interface StorageRepository {
   getCategories(): Promise<Category[]>;
   saveCategoryBudget(categoryId: string, budget_sen: number | null): Promise<void>;
   createCategory(name: string, icon?: string, budget_sen?: number | null): Promise<Category>;
+  deleteCategory(id: string): Promise<void>;
   
   getExpenses(options?: { month?: string; categoryId?: string }): Promise<Expense[]>;
   createExpense(input: CreateExpenseInput): Promise<Expense>;

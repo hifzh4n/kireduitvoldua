@@ -147,6 +147,11 @@ export default function Home() {
     setCategories((prev) => [...prev, created]);
   };
 
+  const handleDeleteCategory = async (id: string) => {
+    await storage.deleteCategory(id);
+    setCategories((prev) => prev.filter((c) => c.id !== id));
+  };
+
   // Calculated Metrics
   const totalExpensesSen = useMemo(() => {
     return expenses.reduce((sum, e) => sum + e.amount_sen, 0);
@@ -268,6 +273,7 @@ export default function Home() {
                 expenses={expenses}
                 onSaveBudget={handleSaveBudget}
                 onCreateCategory={handleCreateCategory}
+                onDeleteCategory={handleDeleteCategory}
               />
             )}
           </div>

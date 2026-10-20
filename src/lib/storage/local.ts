@@ -75,6 +75,12 @@ export const localRepository = {
     return newCat;
   },
 
+  async deleteCategory(id: string): Promise<void> {
+    const cats = await this.getCategories();
+    const filtered = cats.filter((c) => c.id !== id);
+    setStored(CATEGORIES_KEY, filtered);
+  },
+
   async getExpenses(options?: { month?: string; categoryId?: string }): Promise<Expense[]> {
     const list = getStored<Expense[]>(EXPENSES_KEY, []);
     return list
