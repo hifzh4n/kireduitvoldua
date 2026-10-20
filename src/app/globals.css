@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fbfbf9;
+  --foreground: #1c1d1f;
+  --card: #ffffff;
+  --card-border: #e8e6e1;
+  --muted: #72716e;
+  --muted-bg: #f4f3ef;
+  --accent: #2e5c46; /* muted forest green */
+  --accent-light: #eaf3ee;
+  --destructive: #b33927; /* earthy terracotta */
+  --destructive-light: #fbeee9;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-border: var(--card-border);
+  --color-muted: var(--muted);
+  --color-muted-bg: var(--muted-bg);
+  --color-accent: var(--accent);
+  --color-destructive: var(--destructive);
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #121315;
+    --foreground: #e8e8e6;
+    --card: #18191c;
+    --card-border: #282a2e;
+    --muted: #959693;
+    --muted-bg: #212226;
+    --accent: #488b6b;
+    --accent-light: #16291f;
+    --destructive: #d45945;
+    --destructive-light: #2c1815;
+  }
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Force tabular digits for all numerical and monetary readouts */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 3px;
+}
