@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ChevronLeft, ChevronRight, Plus, Database, HardDrive } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 interface HeaderProps {
   currentMonth: string; // YYYY-MM
@@ -42,14 +43,17 @@ export function Header({
     <header className="sticky top-0 z-30 border-b border-[var(--card-border)] bg-[var(--card)]/95 backdrop-blur-md px-3.5 py-2.5 sm:px-6 sm:py-3">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-2">
         {/* Brand & Sync Status */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex items-baseline gap-1.5">
-            <h1 className="font-mono text-lg sm:text-xl font-bold tracking-tight text-[var(--foreground)]">
-              kireduit
-            </h1>
-            <span className="hidden sm:inline text-xs font-medium text-[var(--muted)]">
-              / ledger
-            </span>
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2">
+            <Logo size={24} className="rounded-md" />
+            <div className="flex items-baseline gap-1.5">
+              <h1 className="font-mono text-lg sm:text-xl font-bold tracking-tight text-[var(--foreground)]">
+                kireduit
+              </h1>
+              <span className="hidden sm:inline text-xs font-medium text-[var(--muted)]">
+                / ledger
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-1 rounded-full border border-[var(--card-border)] bg-[var(--muted-bg)] px-2 py-0.5 text-[10px] sm:text-xs text-[var(--muted)]">

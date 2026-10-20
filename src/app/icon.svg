@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#18191c"/>
+      <stop offset="100%" stop-color="#0e0f11"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Square Base with smooth squircle corners -->
+  <rect x="24" y="24" width="464" height="464" rx="108" fill="url(#bg)" stroke="#2b2d32" stroke-width="12"/>
+
+  <!-- Subtle inner ledger grid accent -->
+  <line x1="80" y1="256" x2="432" y2="256" stroke="#222428" stroke-width="4" stroke-dasharray="8 8"/>
+
+  <!-- Left Spine of 'K' (Solid Reserve) -->
+  <line x1="158" y1="140" x2="158" y2="372" stroke="#f4f3ef" stroke-width="54" stroke-linecap="round"/>
+
+  <!-- Upper Branch (Receivables / Inflow / Emerald) -->
+  <line x1="228" y1="238" x2="346" y2="140" stroke="#10b981" stroke-width="54" stroke-linecap="round"/>
+
+  <!-- Lower Branch (Payables / Expenses / Terracotta) -->
+  <line x1="228" y1="274" x2="346" y2="372" stroke="#f87171" stroke-width="54" stroke-linecap="round"/>
+</svg>

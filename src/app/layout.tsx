@@ -15,6 +15,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Kireduit — Personal Money & Owe Tracker",
   description: "A calm, high-density personal expense and debt tracker for Malaysian Ringgit (MYR).",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/logo.svg" },
+    ],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
