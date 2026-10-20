@@ -55,7 +55,7 @@ export function QuickAddModal({
         setPersonName("");
         setDueDate("");
         setSpentAt(getLocalDateString(new Date()));
-        if (categories.length > 0 && !categoryId) {
+        if (categories.length > 0) {
           setCategoryId(categories[0].id);
         }
       }
@@ -63,7 +63,7 @@ export function QuickAddModal({
         amountInputRef.current?.focus();
       }, 80);
     }
-  }, [isOpen, editingExpense, categories, categoryId]);
+  }, [isOpen, editingExpense, categories]);
 
   // Handle escape key
   useEffect(() => {
