@@ -1,6 +1,7 @@
 import type { Category, Expense, Debt, CreateExpenseInput, UpdateExpenseInput, CreateDebtInput } from "../../types/index.ts";
 
 const CATEGORIES_KEY = "kireduit_categories";
+const CATEGORIES_INIT_KEY = "kireduit_categories_initialized";
 const EXPENSES_KEY = "kireduit_expenses";
 const DEBTS_KEY = "kireduit_debts";
 
@@ -45,12 +46,18 @@ function setStored<T>(key: string, value: T): void {
 
 export const localRepository = {
   async getCategories(): Promise<Category[]> {
-    let cats = getStored<Category[]>(CATEGORIES_KEY, []);
-    if (!cats || cats.length === 0) {
-      cats = INITIAL_DEFAULT_CATEGORIES;
-      setStored(CATEGORIES_KEY, cats);
+    const isInitialized = getStored<boolean>(CATEGORIES_INIT_KEY, false);
+    if (!isInitialized) {
+      const existing = getStored<Category[]>(CATEGORIES_KEY, []);
+      if (!existing || existing.length === 0) {
+        setStored(CATEGORIES_KEY, INITIAL_DEFAULT_CATEGORIES);
+        setStored(CATEGORIES_INIT_KEY, true);
+        return INITIAL_DEFAULT_CATEGORIES;
+      }
+      setStored(CATEGORIES_INIT_KEY, true);
+      return existing;
     }
-    return cats;
+    return getStored<Category[]>(CATEGORIES_KEY, []);
   },
 
   async saveCategoryBudget(categoryId: string, budget_sen: number | null): Promise<void> {

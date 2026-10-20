@@ -17,53 +17,42 @@ export { isSupabaseConfigured };
 
 export const storage: StorageRepository = {
   async getCategories(): Promise<Category[]> {
-    if (!isSupabaseConfigured || !supabase) {
-      return localRepository.getCategories();
-    }
-
-    try {
+    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from("categories")
         .select("*")
         .order("name", { ascending: true });
 
-      if (error || !data || data.length === 0) {
-        console.warn("Supabase categories query fallback to local", error);
-        return localRepository.getCategories();
+      if (error) {
+        console.error("Supabase getCategories error:", error);
+        throw new Error(`Failed to load categories: ${error.message}`);
       }
 
-      return data as Category[];
-    } catch {
-      return localRepository.getCategories();
+      return (data || []) as Category[];
     }
+
+    return localRepository.getCategories();
   },
 
   async saveCategoryBudget(categoryId: string, budget_sen: number | null): Promise<void> {
-    if (!isSupabaseConfigured || !supabase) {
-      return localRepository.saveCategoryBudget(categoryId, budget_sen);
-    }
-
-    try {
+    if (isSupabaseConfigured && supabase) {
       const { error } = await supabase
         .from("categories")
         .update({ budget_sen })
         .eq("id", categoryId);
 
       if (error) {
-        console.warn("Supabase update category budget fallback", error);
-        return localRepository.saveCategoryBudget(categoryId, budget_sen);
+        console.error("Supabase saveCategoryBudget error:", error);
+        throw new Error(`Failed to update budget: ${error.message}`);
       }
-    } catch {
-      return localRepository.saveCategoryBudget(categoryId, budget_sen);
+      return;
     }
+
+    return localRepository.saveCategoryBudget(categoryId, budget_sen);
   },
 
   async createCategory(name: string, icon = "tag", budget_sen: number | null = null): Promise<Category> {
-    if (!isSupabaseConfigured || !supabase) {
-      return localRepository.createCategory(name, icon, budget_sen);
-    }
-
-    try {
+    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from("categories")
         .insert([{ name: name.trim(), icon, budget_sen }])
@@ -71,37 +60,40 @@ export const storage: StorageRepository = {
         .single();
 
       if (error || !data) {
-        return localRepository.createCategory(name, icon, budget_sen);
+        console.error("Supabase createCategory error:", error);
+        throw new Error(`Failed to create category: ${error?.message || "Unknown error"}`);
       }
+
       return data as Category;
-    } catch {
-      return localRepository.createCategory(name, icon, budget_sen);
     }
+
+    return localRepository.createCategory(name, icon, budget_sen);
   },
 
   async deleteCategory(id: string): Promise<void> {
-    if (!isSupabaseConfigured || !supabase) {
-      return localRepository.deleteCategory(id);
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from("categories")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.error("Supabase deleteCategory error:", error);
+        throw new Error(`Failed to delete category: ${error.message}`);
+      }
+      return;
     }
 
-    try {
-      const { error } = await supabase.from("categories").delete().eq("id", id);
-      if (error) {
-        console.warn("Supabase deleteCategory fallback", error);
-        return localRepository.deleteCategory(id);
-      }
-    } catch {
-      return localRepository.deleteCategory(id);
-    }
+    return localRepository.deleteCategory(id);
   },
 
   async getExpenses(options?: { month?: string; categoryId?: string }): Promise<Expense[]> {
-    if (!isSupabaseConfigured || !supabase) {
-      return localRepository.getExpenses(options);
-    }
-
-    try {
-      let query = supabase.from("expenses").select("*").order("spent_at", { ascending: false });
+    if (isSupabaseConfigured && supabase) {
+      let query = supabase
+        .from("expenses")
+        .select("*")
+        .order("spent_at", { ascending: false })
+        .order("created_at", { ascending: false });
 
       if (options?.month) {
         const { start, nextMonthStart } = getMonthBounds(options.month);
@@ -113,22 +105,19 @@ export const storage: StorageRepository = {
       }
 
       const { data, error } = await query;
-      if (error || !data) {
-        console.warn("Supabase expenses query fallback", error);
-        return localRepository.getExpenses(options);
+      if (error) {
+        console.error("Supabase getExpenses error:", error);
+        throw new Error(`Failed to load expenses: ${error.message}`);
       }
-      return data as Expense[];
-    } catch {
-      return localRepository.getExpenses(options);
+
+      return (data || []) as Expense[];
     }
+
+    return localRepository.getExpenses(options);
   },
 
   async createExpense(input: CreateExpenseInput): Promise<Expense> {
-    if (!isSupabaseConfigured || !supabase) {
-      return localRepository.createExpense(input);
-    }
-
-    try {
+    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from("expenses")
         .insert([
@@ -144,21 +133,18 @@ export const storage: StorageRepository = {
         .single();
 
       if (error || !data) {
-        console.warn("Supabase createExpense fallback", error);
-        return localRepository.createExpense(input);
+        console.error("Supabase createExpense error:", error);
+        throw new Error(`Failed to create expense: ${error?.message || "Unknown error"}`);
       }
+
       return data as Expense;
-    } catch {
-      return localRepository.createExpense(input);
     }
+
+    return localRepository.createExpense(input);
   },
 
   async updateExpense(id: string, input: UpdateExpenseInput): Promise<Expense> {
-    if (!isSupabaseConfigured || !supabase) {
-      return localRepository.updateExpense(id, input);
-    }
-
-    try {
+    if (isSupabaseConfigured && supabase) {
       const updatePayload: Record<string, unknown> = {};
       if (input.amount_sen !== undefined) updatePayload.amount_sen = input.amount_sen;
       if (input.category_id !== undefined) updatePayload.category_id = input.category_id;
@@ -174,37 +160,39 @@ export const storage: StorageRepository = {
         .single();
 
       if (error || !data) {
-        console.warn("Supabase updateExpense fallback", error);
-        return localRepository.updateExpense(id, input);
+        console.error("Supabase updateExpense error:", error);
+        throw new Error(`Failed to update expense: ${error?.message || "Unknown error"}`);
       }
+
       return data as Expense;
-    } catch {
-      return localRepository.updateExpense(id, input);
     }
+
+    return localRepository.updateExpense(id, input);
   },
 
   async deleteExpense(id: string): Promise<void> {
-    if (!isSupabaseConfigured || !supabase) {
-      return localRepository.deleteExpense(id);
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from("expenses")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.error("Supabase deleteExpense error:", error);
+        throw new Error(`Failed to delete expense: ${error.message}`);
+      }
+      return;
     }
 
-    try {
-      const { error } = await supabase.from("expenses").delete().eq("id", id);
-      if (error) {
-        return localRepository.deleteExpense(id);
-      }
-    } catch {
-      return localRepository.deleteExpense(id);
-    }
+    return localRepository.deleteExpense(id);
   },
 
   async getDebts(options?: { type?: DebtType; status?: DebtStatus }): Promise<Debt[]> {
-    if (!isSupabaseConfigured || !supabase) {
-      return localRepository.getDebts(options);
-    }
-
-    try {
-      let query = supabase.from("debts").select("*").order("created_at", { ascending: false });
+    if (isSupabaseConfigured && supabase) {
+      let query = supabase
+        .from("debts")
+        .select("*")
+        .order("created_at", { ascending: false });
 
       if (options?.type) {
         query = query.eq("type", options.type);
@@ -215,22 +203,19 @@ export const storage: StorageRepository = {
       }
 
       const { data, error } = await query;
-      if (error || !data) {
-        console.warn("Supabase getDebts fallback", error);
-        return localRepository.getDebts(options);
+      if (error) {
+        console.error("Supabase getDebts error:", error);
+        throw new Error(`Failed to load debts: ${error.message}`);
       }
-      return data as Debt[];
-    } catch {
-      return localRepository.getDebts(options);
+
+      return (data || []) as Debt[];
     }
+
+    return localRepository.getDebts(options);
   },
 
   async createDebt(input: CreateDebtInput): Promise<Debt> {
-    if (!isSupabaseConfigured || !supabase) {
-      return localRepository.createDebt(input);
-    }
-
-    try {
+    if (isSupabaseConfigured && supabase) {
       const { data, error } = await supabase
         .from("debts")
         .insert([
@@ -247,21 +232,18 @@ export const storage: StorageRepository = {
         .single();
 
       if (error || !data) {
-        console.warn("Supabase createDebt fallback", error);
-        return localRepository.createDebt(input);
+        console.error("Supabase createDebt error:", error);
+        throw new Error(`Failed to create debt: ${error?.message || "Unknown error"}`);
       }
+
       return data as Debt;
-    } catch {
-      return localRepository.createDebt(input);
     }
+
+    return localRepository.createDebt(input);
   },
 
   async toggleDebtStatus(id: string, currentStatus: DebtStatus): Promise<Debt> {
-    if (!isSupabaseConfigured || !supabase) {
-      return localRepository.toggleDebtStatus(id, currentStatus);
-    }
-
-    try {
+    if (isSupabaseConfigured && supabase) {
       const nextStatus = currentStatus === "UNSETTLED" ? "SETTLED" : "UNSETTLED";
       const settled_at = nextStatus === "SETTLED" ? new Date().toISOString() : null;
 
@@ -273,27 +255,30 @@ export const storage: StorageRepository = {
         .single();
 
       if (error || !data) {
-        console.warn("Supabase toggleDebtStatus fallback", error);
-        return localRepository.toggleDebtStatus(id, currentStatus);
+        console.error("Supabase toggleDebtStatus error:", error);
+        throw new Error(`Failed to toggle debt status: ${error?.message || "Unknown error"}`);
       }
+
       return data as Debt;
-    } catch {
-      return localRepository.toggleDebtStatus(id, currentStatus);
     }
+
+    return localRepository.toggleDebtStatus(id, currentStatus);
   },
 
   async deleteDebt(id: string): Promise<void> {
-    if (!isSupabaseConfigured || !supabase) {
-      return localRepository.deleteDebt(id);
+    if (isSupabaseConfigured && supabase) {
+      const { error } = await supabase
+        .from("debts")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.error("Supabase deleteDebt error:", error);
+        throw new Error(`Failed to delete debt: ${error.message}`);
+      }
+      return;
     }
 
-    try {
-      const { error } = await supabase.from("debts").delete().eq("id", id);
-      if (error) {
-        return localRepository.deleteDebt(id);
-      }
-    } catch {
-      return localRepository.deleteDebt(id);
-    }
+    return localRepository.deleteDebt(id);
   },
 };
