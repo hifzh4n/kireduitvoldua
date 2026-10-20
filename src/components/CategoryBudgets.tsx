@@ -28,12 +28,17 @@ export function CategoryBudgets({
   // Compute spent amount per category for this month
   const categoryStats = useMemo(() => {
     const spentMap: { [catId: string]: number } = {};
+    let uncategorizedSen = 0;
+
     for (const exp of expenses) {
-      const id = exp.category_id || "uncategorized";
-      spentMap[id] = (spentMap[id] || 0) + exp.amount_sen;
+      if (exp.category_id && categories.some((c) => c.id === exp.category_id)) {
+        spentMap[exp.category_id] = (spentMap[exp.category_id] || 0) + exp.amount_sen;
+      } else {
+        uncategorizedSen += exp.amount_sen;
+      }
     }
 
-    return categories.map((cat) => {
+    const list = categories.map((cat) => {
       const spentSen = spentMap[cat.id] || 0;
       const budgetSen = cat.budget_sen;
       const percentage = budgetSen && budgetSen > 0 ? Math.round((spentSen / budgetSen) * 100) : null;
@@ -44,6 +49,20 @@ export function CategoryBudgets({
         percentage,
       };
     }).sort((a, b) => b.spentSen - a.spentSen);
+
+    if (uncategorizedSen > 0) {
+      list.push({
+        id: "uncategorized",
+        name: "Other / Uncategorized",
+        icon: "circle-dot",
+        budget_sen: null,
+        created_at: "",
+        spentSen: uncategorizedSen,
+        percentage: null,
+      });
+    }
+
+    return list;
   }, [categories, expenses]);
 
   const handleStartEdit = (cat: Category) => {

@@ -3,6 +3,7 @@ import type {
   Expense,
   Debt,
   CreateExpenseInput,
+  UpdateExpenseInput,
   CreateDebtInput,
   DebtType,
   DebtStatus,
@@ -10,6 +11,7 @@ import type {
 } from "../../types/index.ts";
 import { supabase, isSupabaseConfigured } from "./supabase";
 import { localRepository } from "./local";
+import { getMonthBounds } from "../date";
 
 export { isSupabaseConfigured };
 
@@ -86,10 +88,8 @@ export const storage: StorageRepository = {
       let query = supabase.from("expenses").select("*").order("spent_at", { ascending: false });
 
       if (options?.month) {
-        // e.g. '2026-10' -> start of month to end of month
-        const start = `${options.month}-01`;
-        const end = `${options.month}-31`;
-        query = query.gte("spent_at", start).lte("spent_at", end);
+        const { start, nextMonthStart } = getMonthBounds(options.month);
+        query = query.gte("spent_at", start).lt("spent_at", nextMonthStart);
       }
 
       if (options?.categoryId) {
@@ -134,6 +134,36 @@ export const storage: StorageRepository = {
       return data as Expense;
     } catch {
       return localRepository.createExpense(input);
+    }
+  },
+
+  async updateExpense(id: string, input: UpdateExpenseInput): Promise<Expense> {
+    if (!isSupabaseConfigured || !supabase) {
+      return localRepository.updateExpense(id, input);
+    }
+
+    try {
+      const updatePayload: Record<string, unknown> = {};
+      if (input.amount_sen !== undefined) updatePayload.amount_sen = input.amount_sen;
+      if (input.category_id !== undefined) updatePayload.category_id = input.category_id;
+      if (input.category_name !== undefined) updatePayload.category_name = input.category_name;
+      if (input.note !== undefined) updatePayload.note = input.note;
+      if (input.spent_at !== undefined) updatePayload.spent_at = input.spent_at;
+
+      const { data, error } = await supabase
+        .from("expenses")
+        .update(updatePayload)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error || !data) {
+        console.warn("Supabase updateExpense fallback", error);
+        return localRepository.updateExpense(id, input);
+      }
+      return data as Expense;
+    } catch {
+      return localRepository.updateExpense(id, input);
     }
   },
 

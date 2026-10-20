@@ -1,8 +1,17 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { Category, Expense, Debt, CreateExpenseInput, CreateDebtInput, DebtStatus } from "@/types";
+import {
+  Category,
+  Expense,
+  Debt,
+  CreateExpenseInput,
+  UpdateExpenseInput,
+  CreateDebtInput,
+  DebtStatus,
+} from "@/types";
 import { storage, isSupabaseConfigured } from "@/lib/storage";
+import { getLocalMonthString } from "@/lib/date";
 import { Header } from "@/components/Header";
 import { SummaryCards } from "@/components/SummaryCards";
 import { NavigationTabs, TabKey } from "@/components/NavigationTabs";
@@ -18,11 +27,18 @@ export default function Home() {
 
   const [activeTab, setActiveTab] = useState<TabKey>("expenses");
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [debts, setDebts] = useState<Debt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const sortExpenses = (list: Expense[]) => {
+    return [...list].sort(
+      (a, b) => b.spent_at.localeCompare(a.spent_at) || b.created_at.localeCompare(a.created_at)
+    );
+  };
 
   // Load categories and debts on mount
   const loadData = useCallback(async (month: string) => {
@@ -35,7 +51,7 @@ export default function Home() {
         storage.getDebts(),
       ]);
       setCategories(cats);
-      setExpenses(exps);
+      setExpenses(sortExpenses(exps));
       setDebts(dbs);
     } catch (err) {
       console.error("Failed to load tracker data", err);
@@ -45,10 +61,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    const initialMonth = `${y}-${m}`;
+    const initialMonth = getLocalMonthString(new Date());
     setCurrentMonth(initialMonth);
     setMounted(true);
     loadData(initialMonth);
@@ -57,7 +70,6 @@ export default function Home() {
   // Global keyboard shortcuts (Ctrl+K or N to open quick add)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if user is actively typing in an input or textarea
       if (
         document.activeElement?.tagName === "INPUT" ||
         document.activeElement?.tagName === "TEXTAREA" ||
@@ -68,6 +80,7 @@ export default function Home() {
 
       if (e.key === "n" || e.key === "N" || ((e.metaKey || e.ctrlKey) && e.key === "k")) {
         e.preventDefault();
+        setEditingExpense(null);
         setIsQuickAddOpen(true);
       }
     };
@@ -80,8 +93,24 @@ export default function Home() {
   const handleAddExpense = async (input: CreateExpenseInput) => {
     const created = await storage.createExpense(input);
     if (input.spent_at.startsWith(currentMonth)) {
-      setExpenses((prev) => [created, ...prev]);
+      setExpenses((prev) => sortExpenses([created, ...prev]));
     }
+  };
+
+  const handleEditExpense = (expense: Expense) => {
+    setEditingExpense(expense);
+    setIsQuickAddOpen(true);
+  };
+
+  const handleUpdateExpense = async (id: string, input: UpdateExpenseInput) => {
+    const updated = await storage.updateExpense(id, input);
+    setExpenses((prev) => {
+      const remaining = prev.filter((e) => e.id !== id);
+      if (updated.spent_at.startsWith(currentMonth)) {
+        return sortExpenses([updated, ...remaining]);
+      }
+      return remaining;
+    });
   };
 
   const handleDeleteExpense = async (id: string) => {
@@ -144,6 +173,11 @@ export default function Home() {
     loadData(month);
   };
 
+  const handleCloseQuickAdd = () => {
+    setIsQuickAddOpen(false);
+    setEditingExpense(null);
+  };
+
   if (!mounted) {
     return null;
   }
@@ -154,7 +188,10 @@ export default function Home() {
       <Header
         currentMonth={currentMonth}
         onMonthChange={handleMonthChange}
-        onOpenQuickAdd={() => setIsQuickAddOpen(true)}
+        onOpenQuickAdd={() => {
+          setEditingExpense(null);
+          setIsQuickAddOpen(true);
+        }}
         isSupabaseConfigured={isSupabaseConfigured}
       />
 
@@ -190,8 +227,12 @@ export default function Home() {
               <ExpensesList
                 expenses={expenses}
                 categories={categories}
+                onEditExpense={handleEditExpense}
                 onDeleteExpense={handleDeleteExpense}
-                onOpenQuickAdd={() => setIsQuickAddOpen(true)}
+                onOpenQuickAdd={() => {
+                  setEditingExpense(null);
+                  setIsQuickAddOpen(true);
+                }}
               />
             )}
 
@@ -201,7 +242,10 @@ export default function Home() {
                 debts={debts}
                 onToggleStatus={handleToggleDebtStatus}
                 onDeleteDebt={handleDeleteDebt}
-                onOpenQuickAdd={() => setIsQuickAddOpen(true)}
+                onOpenQuickAdd={() => {
+                  setEditingExpense(null);
+                  setIsQuickAddOpen(true);
+                }}
               />
             )}
 
@@ -211,7 +255,10 @@ export default function Home() {
                 debts={debts}
                 onToggleStatus={handleToggleDebtStatus}
                 onDeleteDebt={handleDeleteDebt}
-                onOpenQuickAdd={() => setIsQuickAddOpen(true)}
+                onOpenQuickAdd={() => {
+                  setEditingExpense(null);
+                  setIsQuickAddOpen(true);
+                }}
               />
             )}
 
@@ -229,7 +276,10 @@ export default function Home() {
 
       {/* Mobile Floating Action Button */}
       <button
-        onClick={() => setIsQuickAddOpen(true)}
+        onClick={() => {
+          setEditingExpense(null);
+          setIsQuickAddOpen(true);
+        }}
         className="sm:hidden fixed bottom-6 right-5 z-40 flex h-13 w-13 items-center justify-center rounded-full bg-[var(--foreground)] text-[var(--background)] shadow-2xl active:scale-90 transition-transform"
         aria-label="Add new entry"
       >
@@ -239,9 +289,11 @@ export default function Home() {
       {/* Quick Add Modal */}
       <QuickAddModal
         isOpen={isQuickAddOpen}
-        onClose={() => setIsQuickAddOpen(false)}
+        onClose={handleCloseQuickAdd}
         categories={categories}
+        editingExpense={editingExpense}
         onAddExpense={handleAddExpense}
+        onUpdateExpense={handleUpdateExpense}
         onAddDebt={handleAddDebt}
       />
     </div>

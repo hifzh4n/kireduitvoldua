@@ -24,6 +24,14 @@ test("storage repository creates and queries expenses", async () => {
 
   const list = await localRepository.getExpenses({ month: "2026-10" });
   assert.ok(list.some((e) => e.id === expense.id));
+
+  // Test updating the expense
+  const updated = await localRepository.updateExpense(expense.id, {
+    amount_sen: 1800,
+    note: "Nasi Kandar lunch with drink",
+  });
+  assert.equal(updated.amount_sen, 1800);
+  assert.equal(updated.note, "Nasi Kandar lunch with drink");
 });
 
 test("storage repository handles standalone debts and binary settlement", async () => {

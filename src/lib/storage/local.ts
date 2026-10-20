@@ -1,4 +1,4 @@
-import type { Category, Expense, Debt, CreateExpenseInput, CreateDebtInput } from "../../types/index.ts";
+import type { Category, Expense, Debt, CreateExpenseInput, UpdateExpenseInput, CreateDebtInput } from "../../types/index.ts";
 
 const CATEGORIES_KEY = "kireduit_categories";
 const EXPENSES_KEY = "kireduit_expenses";
@@ -77,15 +77,17 @@ export const localRepository = {
 
   async getExpenses(options?: { month?: string; categoryId?: string }): Promise<Expense[]> {
     const list = getStored<Expense[]>(EXPENSES_KEY, []);
-    return list.filter((exp) => {
-      if (options?.month && !exp.spent_at.startsWith(options.month)) {
-        return false;
-      }
-      if (options?.categoryId && exp.category_id !== options.categoryId) {
-        return false;
-      }
-      return true;
-    }).sort((a, b) => (b.spent_at > a.spent_at ? 1 : -1));
+    return list
+      .filter((exp) => {
+        if (options?.month && !exp.spent_at.startsWith(options.month)) {
+          return false;
+        }
+        if (options?.categoryId && exp.category_id !== options.categoryId) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => b.spent_at.localeCompare(a.spent_at) || b.created_at.localeCompare(a.created_at));
   },
 
   async createExpense(input: CreateExpenseInput): Promise<Expense> {
@@ -100,8 +102,32 @@ export const localRepository = {
       created_at: new Date().toISOString(),
     };
     list.unshift(newExp);
+    list.sort((a, b) => b.spent_at.localeCompare(a.spent_at) || b.created_at.localeCompare(a.created_at));
     setStored(EXPENSES_KEY, list);
     return newExp;
+  },
+
+  async updateExpense(id: string, input: UpdateExpenseInput): Promise<Expense> {
+    const list = getStored<Expense[]>(EXPENSES_KEY, []);
+    let updatedExp: Expense | null = null;
+    const updated = list.map((exp) => {
+      if (exp.id === id) {
+        updatedExp = {
+          ...exp,
+          amount_sen: input.amount_sen !== undefined ? input.amount_sen : exp.amount_sen,
+          category_id: input.category_id !== undefined ? input.category_id : exp.category_id,
+          category_name: input.category_name !== undefined ? input.category_name : exp.category_name,
+          note: input.note !== undefined ? input.note : exp.note,
+          spent_at: input.spent_at !== undefined ? input.spent_at : exp.spent_at,
+        };
+        return updatedExp;
+      }
+      return exp;
+    });
+    if (!updatedExp) throw new Error("Expense not found");
+    updated.sort((a, b) => b.spent_at.localeCompare(a.spent_at) || b.created_at.localeCompare(a.created_at));
+    setStored(EXPENSES_KEY, updated);
+    return updatedExp;
   },
 
   async deleteExpense(id: string): Promise<void> {

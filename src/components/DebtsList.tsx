@@ -3,7 +3,8 @@
 import React, { useState, useMemo } from "react";
 import { Debt, DebtStatus, DebtType } from "@/types";
 import { formatMYR } from "@/lib/money";
-import { CheckCircle2, RotateCcw, Trash2, Search, Plus, Calendar, AlertCircle } from "lucide-react";
+import { formatDisplayDate } from "@/lib/date";
+import { CheckCircle2, RotateCcw, Trash2, Search, Plus, Calendar, AlertCircle, User } from "lucide-react";
 
 interface DebtsListProps {
   type: DebtType; // RECEIVABLE (Who owes me) or PAYABLE (Who I owe)
@@ -22,12 +23,34 @@ export function DebtsList({
 }: DebtsListProps) {
   const [statusFilter, setStatusFilter] = useState<DebtStatus>("UNSETTLED");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPerson, setSelectedPerson] = useState<string>("ALL");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
+  const debtsForType = useMemo(() => {
+    return debts.filter((d) => d.type === type);
+  }, [debts, type]);
+
+  // Extract unique contacts with their unsettled total
+  const contactSummaries = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const d of debtsForType) {
+      if (d.status === "UNSETTLED") {
+        map.set(d.person_name, (map.get(d.person_name) || 0) + d.amount_sen);
+      } else if (!map.has(d.person_name)) {
+        map.set(d.person_name, 0);
+      }
+    }
+    return Array.from(map.entries()).map(([name, totalSen]) => ({
+      name,
+      totalSen,
+    }));
+  }, [debtsForType]);
+
   const filteredDebts = useMemo(() => {
-    return debts.filter((d) => {
-      if (d.type !== type) return false;
+    return debtsForType.filter((d) => {
       if (d.status !== statusFilter) return false;
+      if (selectedPerson !== "ALL" && d.person_name !== selectedPerson) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchName = d.person_name.toLowerCase().includes(q);
@@ -36,7 +59,7 @@ export function DebtsList({
       }
       return true;
     });
-  }, [debts, type, statusFilter, searchQuery]);
+  }, [debtsForType, statusFilter, selectedPerson, searchQuery]);
 
   const totalFilteredSen = useMemo(() => {
     return filteredDebts.reduce((sum, d) => sum + d.amount_sen, 0);
@@ -52,13 +75,12 @@ export function DebtsList({
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("Delete this debt record?")) {
-      setActionLoadingId(id);
-      try {
-        await onDeleteDebt(id);
-      } finally {
-        setActionLoadingId(null);
-      }
+    setActionLoadingId(id);
+    try {
+      await onDeleteDebt(id);
+      setConfirmDeleteId(null);
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -68,7 +90,7 @@ export function DebtsList({
   return (
     <div className="space-y-3 sm:space-y-4">
       {/* Controls Bar */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         {/* Search */}
         <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted)]" />
@@ -116,6 +138,39 @@ export function DebtsList({
         </div>
       </div>
 
+      {/* Contact Filter Chips (U4: Filter by Person) */}
+      {contactSummaries.length > 1 && (
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <button
+            onClick={() => setSelectedPerson("ALL")}
+            className={`whitespace-nowrap shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              selectedPerson === "ALL"
+                ? "bg-[var(--foreground)] text-[var(--background)]"
+                : "border border-[var(--card-border)] bg-[var(--card)] text-[var(--muted)] hover:text-[var(--foreground)]"
+            }`}
+          >
+            All Contacts
+          </button>
+          {contactSummaries.map(({ name, totalSen }) => (
+            <button
+              key={name}
+              onClick={() => setSelectedPerson(name)}
+              className={`flex items-center gap-1.5 whitespace-nowrap shrink-0 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                selectedPerson === name
+                  ? "bg-[var(--foreground)] text-[var(--background)]"
+                  : "border border-[var(--card-border)] bg-[var(--card)] text-[var(--muted)] hover:text-[var(--foreground)]"
+              }`}
+            >
+              <User className="h-3 w-3" />
+              <span>{name}</span>
+              {totalSen > 0 && (
+                <span className="font-mono text-[10px] opacity-80">({formatMYR(totalSen)})</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* List */}
       {filteredDebts.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--card-border)] bg-[var(--card)] p-8 sm:p-12 text-center">
@@ -142,6 +197,7 @@ export function DebtsList({
           <div className="flex items-center justify-between border-b border-[var(--card-border)] bg-[var(--muted-bg)]/80 px-4 py-2 text-xs font-medium text-[var(--muted)]">
             <span>
               {title} &bull; {statusFilter === "UNSETTLED" ? "Active" : "Settled"}
+              {selectedPerson !== "ALL" && ` (${selectedPerson})`}
             </span>
             <span className="font-mono text-xs font-semibold text-[var(--foreground)] tabular-nums">
               Total: {formatMYR(totalFilteredSen)}
@@ -186,7 +242,7 @@ export function DebtsList({
                           Due: {item.due_date}
                         </span>
                       )}
-                      <span>Added: {new Date(item.created_at).toLocaleDateString()}</span>
+                      <span>Added: {formatDisplayDate(item.created_at.split("T")[0])}</span>
                     </div>
                   </div>
 
@@ -226,15 +282,36 @@ export function DebtsList({
                         )}
                       </button>
 
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        disabled={actionLoadingId === item.id}
-                        className="rounded-lg p-1.5 text-[var(--muted)] hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40 dark:hover:text-red-400 active:scale-95"
-                        title="Delete debt"
-                        aria-label="Delete debt"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      {confirmDeleteId === item.id ? (
+                        <div className="flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-1 dark:border-red-900/60 dark:bg-red-950/60 animate-in fade-in">
+                          <span className="text-[11px] font-medium text-red-700 dark:text-red-400">
+                            Delete?
+                          </span>
+                          <button
+                            onClick={() => handleDelete(item.id)}
+                            disabled={actionLoadingId === item.id}
+                            className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white hover:bg-red-700 active:scale-95"
+                          >
+                            Yes
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteId(null)}
+                            className="px-1 text-[10px] text-[var(--muted)] hover:text-[var(--foreground)]"
+                          >
+                            No
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDeleteId(item.id)}
+                          disabled={actionLoadingId === item.id}
+                          className="rounded-lg p-1.5 text-[var(--muted)] hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40 dark:hover:text-red-400 active:scale-95"
+                          title="Delete debt"
+                          aria-label="Delete debt"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </li>

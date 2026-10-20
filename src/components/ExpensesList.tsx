@@ -3,11 +3,13 @@
 import React, { useState, useMemo } from "react";
 import { Expense, Category } from "@/types";
 import { formatMYR } from "@/lib/money";
-import { Search, Trash2, Calendar, Tag, Plus } from "lucide-react";
+import { formatDisplayDate } from "@/lib/date";
+import { Search, Trash2, Edit2, Calendar, Tag, Plus, AlertCircle } from "lucide-react";
 
 interface ExpensesListProps {
   expenses: Expense[];
   categories: Category[];
+  onEditExpense: (expense: Expense) => void;
   onDeleteExpense: (id: string) => Promise<void>;
   onOpenQuickAdd: () => void;
 }
@@ -15,11 +17,13 @@ interface ExpensesListProps {
 export function ExpensesList({
   expenses,
   categories,
+  onEditExpense,
   onDeleteExpense,
   onOpenQuickAdd,
 }: ExpensesListProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("ALL");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Filter expenses by search query and category
@@ -51,29 +55,13 @@ export function ExpensesList({
   }, [filteredExpenses]);
 
   const handleDelete = async (id: string) => {
-    if (confirm("Delete this expense record?")) {
-      setDeletingId(id);
-      try {
-        await onDeleteExpense(id);
-      } finally {
-        setDeletingId(null);
-      }
+    setDeletingId(id);
+    try {
+      await onDeleteExpense(id);
+      setConfirmDeleteId(null);
+    } finally {
+      setDeletingId(null);
     }
-  };
-
-  const formatDateHeader = (dateStr: string) => {
-    const today = new Date().toISOString().split("T")[0];
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
-
-    if (dateStr === today) return "Today";
-    if (dateStr === yesterday) return "Yesterday";
-
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    });
   };
 
   return (
@@ -154,7 +142,7 @@ export function ExpensesList({
                 {/* Date sub-header */}
                 <div className="flex items-center justify-between border-b border-[var(--card-border)] bg-[var(--muted-bg)]/80 px-3.5 py-2 text-xs font-medium text-[var(--muted)]">
                   <span className="font-semibold text-[var(--foreground)]">
-                    {formatDateHeader(date)}
+                    {formatDisplayDate(date)}
                   </span>
                   <span className="font-mono text-[11px] text-[var(--muted)] tabular-nums">
                     Total: {formatMYR(dayTotalSen)}
@@ -178,19 +166,50 @@ export function ExpensesList({
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                      <div className="flex items-center gap-2 shrink-0">
                         <span className="font-mono text-xs sm:text-sm font-semibold tracking-tight text-[var(--foreground)] tabular-nums">
                           {formatMYR(item.amount_sen)}
                         </span>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          disabled={deletingId === item.id}
-                          className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded p-1.5 text-[var(--muted)] hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40 dark:hover:text-red-400 active:scale-95"
-                          title="Delete expense"
-                          aria-label="Delete expense"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+
+                        {confirmDeleteId === item.id ? (
+                          <div className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2 py-1 dark:border-red-900/60 dark:bg-red-950/60 animate-in fade-in">
+                            <span className="text-[11px] font-medium text-red-700 dark:text-red-400">
+                              Delete?
+                            </span>
+                            <button
+                              onClick={() => handleDelete(item.id)}
+                              disabled={deletingId === item.id}
+                              className="rounded bg-red-600 px-1.5 py-0.5 text-[10px] font-semibold text-white hover:bg-red-700 active:scale-95"
+                            >
+                              Yes
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(null)}
+                              className="px-1 text-[10px] text-[var(--muted)] hover:text-[var(--foreground)]"
+                            >
+                              No
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => onEditExpense(item)}
+                              className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded p-1.5 text-[var(--muted)] hover:bg-[var(--muted-bg)] hover:text-[var(--foreground)] active:scale-95"
+                              title="Edit expense"
+                              aria-label="Edit expense"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setConfirmDeleteId(item.id)}
+                              className="opacity-70 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity rounded p-1.5 text-[var(--muted)] hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40 dark:hover:text-red-400 active:scale-95"
+                              title="Delete expense"
+                              aria-label="Delete expense"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </li>
                   ))}

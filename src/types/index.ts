@@ -39,6 +39,14 @@ export interface CreateExpenseInput {
   spent_at: string; // YYYY-MM-DD
 }
 
+export interface UpdateExpenseInput {
+  amount_sen?: number;
+  category_id?: string | null;
+  category_name?: string;
+  note?: string;
+  spent_at?: string; // YYYY-MM-DD
+}
+
 export interface CreateDebtInput {
   type: DebtType;
   person_name: string;
@@ -54,6 +62,7 @@ export interface StorageRepository {
   
   getExpenses(options?: { month?: string; categoryId?: string }): Promise<Expense[]>;
   createExpense(input: CreateExpenseInput): Promise<Expense>;
+  updateExpense(id: string, input: UpdateExpenseInput): Promise<Expense>;
   deleteExpense(id: string): Promise<void>;
 
   getDebts(options?: { type?: DebtType; status?: DebtStatus }): Promise<Debt[]>;

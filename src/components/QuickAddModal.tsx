@@ -1,23 +1,30 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Category, CreateExpenseInput, CreateDebtInput, DebtType } from "@/types";
-import { parseMYRInput, formatMYR } from "@/lib/money";
-import { X, Receipt, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { Category, Expense, CreateExpenseInput, UpdateExpenseInput, CreateDebtInput, DebtType } from "@/types";
+import { parseMYRInput, formatMYR, fromSen } from "@/lib/money";
+import { getLocalDateString } from "@/lib/date";
+import { X, Receipt, ArrowDownLeft, ArrowUpRight, RotateCcw } from "lucide-react";
 
 interface QuickAddModalProps {
   isOpen: boolean;
   onClose: () => void;
   categories: Category[];
+  editingExpense?: Expense | null;
   onAddExpense: (input: CreateExpenseInput) => Promise<void>;
+  onUpdateExpense?: (id: string, input: UpdateExpenseInput) => Promise<void>;
   onAddDebt: (input: CreateDebtInput) => Promise<void>;
 }
+
+const QUICK_DENOMINATIONS = [5, 10, 20, 50, 100];
 
 export function QuickAddModal({
   isOpen,
   onClose,
   categories,
+  editingExpense,
   onAddExpense,
+  onUpdateExpense,
   onAddDebt,
 }: QuickAddModalProps) {
   const [entryType, setEntryType] = useState<"EXPENSE" | "DEBT">("EXPENSE");
@@ -36,19 +43,27 @@ export function QuickAddModal({
   useEffect(() => {
     if (isOpen) {
       setError(null);
-      setAmountStr("");
-      setNote("");
-      setPersonName("");
-      setDueDate("");
-      setSpentAt(new Date().toISOString().split("T")[0]);
-      if (categories.length > 0 && !categoryId) {
-        setCategoryId(categories[0].id);
+      if (editingExpense) {
+        setEntryType("EXPENSE");
+        setAmountStr(fromSen(editingExpense.amount_sen).toFixed(2));
+        setNote(editingExpense.note || "");
+        setSpentAt(editingExpense.spent_at);
+        setCategoryId(editingExpense.category_id || (categories[0]?.id ?? ""));
+      } else {
+        setAmountStr("");
+        setNote("");
+        setPersonName("");
+        setDueDate("");
+        setSpentAt(getLocalDateString(new Date()));
+        if (categories.length > 0 && !categoryId) {
+          setCategoryId(categories[0].id);
+        }
       }
       setTimeout(() => {
         amountInputRef.current?.focus();
       }, 80);
     }
-  }, [isOpen, categories, categoryId]);
+  }, [isOpen, editingExpense, categories, categoryId]);
 
   // Handle escape key
   useEffect(() => {
@@ -62,6 +77,17 @@ export function QuickAddModal({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const handleAddDenomination = (val: number) => {
+    const current = parseFloat(amountStr) || 0;
+    const next = Math.round((current + val) * 100) / 100;
+    setAmountStr(next.toString());
+  };
+
+  const handleClearAmount = () => {
+    setAmountStr("");
+    amountInputRef.current?.focus();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,13 +103,23 @@ export function QuickAddModal({
     try {
       if (entryType === "EXPENSE") {
         const cat = categories.find((c) => c.id === categoryId);
-        await onAddExpense({
-          amount_sen: parsed.sen,
-          category_id: categoryId || null,
-          category_name: cat ? cat.name : "General",
-          note: note.trim(),
-          spent_at: spentAt,
-        });
+        if (editingExpense && onUpdateExpense) {
+          await onUpdateExpense(editingExpense.id, {
+            amount_sen: parsed.sen,
+            category_id: categoryId || null,
+            category_name: cat ? cat.name : "General",
+            note: note.trim(),
+            spent_at: spentAt,
+          });
+        } else {
+          await onAddExpense({
+            amount_sen: parsed.sen,
+            category_id: categoryId || null,
+            category_name: cat ? cat.name : "General",
+            note: note.trim(),
+            spent_at: spentAt,
+          });
+        }
       } else {
         if (!personName.trim()) {
           setError("Person name is required for debts");
@@ -110,10 +146,8 @@ export function QuickAddModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-xs transition-opacity">
-      {/* Click outside backdrop */}
       <div className="fixed inset-0" onClick={onClose} />
 
-      {/* Drawer on Mobile / Modal on Desktop */}
       <div className="relative z-10 w-full max-w-md rounded-t-2xl sm:rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-5 pb-7 sm:pb-5 shadow-2xl max-h-[92vh] overflow-y-auto">
         {/* Mobile Pull Indicator */}
         <div className="sm:hidden -mt-2 mb-3 flex justify-center">
@@ -122,37 +156,41 @@ export function QuickAddModal({
 
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--card-border)] pb-3">
-          <div className="flex items-center gap-1.5 rounded-lg border border-[var(--card-border)] bg-[var(--muted-bg)] p-1 text-xs">
-            <button
-              type="button"
-              onClick={() => {
-                setEntryType("EXPENSE");
-                setError(null);
-              }}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all ${
-                entryType === "EXPENSE"
-                  ? "bg-[var(--card)] text-[var(--foreground)] shadow-xs"
-                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
-              }`}
-            >
-              <Receipt className="h-3.5 w-3.5" />
-              <span>Expense</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEntryType("DEBT");
-                setError(null);
-              }}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all ${
-                entryType === "DEBT"
-                  ? "bg-[var(--card)] text-[var(--foreground)] shadow-xs"
-                  : "text-[var(--muted)] hover:text-[var(--foreground)]"
-              }`}
-            >
-              <span className="font-semibold">Owe Record</span>
-            </button>
-          </div>
+          {editingExpense ? (
+            <h2 className="text-sm font-semibold text-[var(--foreground)]">Edit Expense</h2>
+          ) : (
+            <div className="flex items-center gap-1.5 rounded-lg border border-[var(--card-border)] bg-[var(--muted-bg)] p-1 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setEntryType("EXPENSE");
+                  setError(null);
+                }}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all ${
+                  entryType === "EXPENSE"
+                    ? "bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                }`}
+              >
+                <Receipt className="h-3.5 w-3.5" />
+                <span>Expense</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEntryType("DEBT");
+                  setError(null);
+                }}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all ${
+                  entryType === "DEBT"
+                    ? "bg-[var(--card)] text-[var(--foreground)] shadow-xs"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                }`}
+              >
+                <span className="font-semibold">Owe Record</span>
+              </button>
+            </div>
+          )}
 
           <button
             onClick={onClose}
@@ -172,7 +210,7 @@ export function QuickAddModal({
           )}
 
           {/* If Debt, choose direction */}
-          {entryType === "DEBT" && (
+          {entryType === "DEBT" && !editingExpense && (
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-[var(--muted)]">Direction</label>
               <div className="grid grid-cols-2 gap-2">
@@ -205,7 +243,7 @@ export function QuickAddModal({
           )}
 
           {/* Amount Input */}
-          <div className="space-y-1">
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-medium text-[var(--muted)]">Amount (RM)</label>
               {parsedAmount.success && (
@@ -229,10 +267,34 @@ export function QuickAddModal({
                 required
               />
             </div>
+
+            {/* Quick Denomination Chips */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              {QUICK_DENOMINATIONS.map((val) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => handleAddDenomination(val)}
+                  className="rounded-full border border-[var(--card-border)] bg-[var(--muted-bg)] px-2.5 py-1 font-mono text-[11px] font-medium text-[var(--foreground)] hover:bg-stone-200 dark:hover:bg-stone-800 active:scale-95 transition-all"
+                >
+                  +RM {val}
+                </button>
+              ))}
+              {amountStr && (
+                <button
+                  type="button"
+                  onClick={handleClearAmount}
+                  className="flex items-center gap-1 rounded-full px-2 py-1 text-[11px] text-[var(--muted)] hover:text-red-600 active:scale-95"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  <span>Clear</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* If Debt, contact name */}
-          {entryType === "DEBT" && (
+          {entryType === "DEBT" && !editingExpense && (
             <div className="space-y-1">
               <label className="text-xs font-medium text-[var(--muted)]">Contact / Person</label>
               <input
@@ -277,7 +339,7 @@ export function QuickAddModal({
               />
             </div>
 
-            {entryType === "DEBT" && (
+            {entryType === "DEBT" && !editingExpense && (
               <div className="space-y-1">
                 <label className="text-xs font-medium text-[var(--muted)]">Due Date (Optional)</label>
                 <input
@@ -320,7 +382,13 @@ export function QuickAddModal({
               disabled={isSubmitting}
               className="flex-1 sm:flex-initial rounded-lg bg-[var(--foreground)] py-2.5 px-5 text-xs font-medium text-[var(--background)] hover:opacity-90 active:scale-98 disabled:opacity-50"
             >
-              {isSubmitting ? "Saving..." : entryType === "EXPENSE" ? "Record Expense" : "Record Debt"}
+              {isSubmitting
+                ? "Saving..."
+                : editingExpense
+                ? "Save Changes"
+                : entryType === "EXPENSE"
+                ? "Record Expense"
+                : "Record Debt"}
             </button>
           </div>
         </form>
