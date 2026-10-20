@@ -46,7 +46,7 @@ export function QuickAddModal({
       }
       setTimeout(() => {
         amountInputRef.current?.focus();
-      }, 50);
+      }, 80);
     }
   }, [isOpen, categories, categoryId]);
 
@@ -109,8 +109,17 @@ export function QuickAddModal({
   const parsedAmount = parseMYRInput(amountStr);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs">
-      <div className="w-full max-w-md rounded-xl border border-[var(--card-border)] bg-[var(--card)] p-5 shadow-xl transition-all">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-xs transition-opacity">
+      {/* Click outside backdrop */}
+      <div className="fixed inset-0" onClick={onClose} />
+
+      {/* Drawer on Mobile / Modal on Desktop */}
+      <div className="relative z-10 w-full max-w-md rounded-t-2xl sm:rounded-2xl border border-[var(--card-border)] bg-[var(--card)] p-5 pb-7 sm:pb-5 shadow-2xl max-h-[92vh] overflow-y-auto">
+        {/* Mobile Pull Indicator */}
+        <div className="sm:hidden -mt-2 mb-3 flex justify-center">
+          <div className="h-1.5 w-10 rounded-full bg-stone-300 dark:bg-stone-700" />
+        </div>
+
         {/* Header */}
         <div className="flex items-center justify-between border-b border-[var(--card-border)] pb-3">
           <div className="flex items-center gap-1.5 rounded-lg border border-[var(--card-border)] bg-[var(--muted-bg)] p-1 text-xs">
@@ -120,7 +129,7 @@ export function QuickAddModal({
                 setEntryType("EXPENSE");
                 setError(null);
               }}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1 font-medium transition-all ${
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all ${
                 entryType === "EXPENSE"
                   ? "bg-[var(--card)] text-[var(--foreground)] shadow-xs"
                   : "text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -135,7 +144,7 @@ export function QuickAddModal({
                 setEntryType("DEBT");
                 setError(null);
               }}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1 font-medium transition-all ${
+              className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-medium transition-all ${
                 entryType === "DEBT"
                   ? "bg-[var(--card)] text-[var(--foreground)] shadow-xs"
                   : "text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -147,7 +156,8 @@ export function QuickAddModal({
 
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-[var(--muted)] hover:bg-[var(--muted-bg)] hover:text-[var(--foreground)]"
+            className="rounded-lg p-2 text-[var(--muted)] hover:bg-[var(--muted-bg)] hover:text-[var(--foreground)] active:scale-95"
+            aria-label="Close"
           >
             <X className="h-4 w-4" />
           </button>
@@ -156,7 +166,7 @@ export function QuickAddModal({
         {/* Form */}
         <form onSubmit={handleSubmit} className="mt-4 space-y-3.5">
           {error && (
-            <div className="rounded-md border border-red-200 bg-red-50 p-2.5 text-xs text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
               {error}
             </div>
           )}
@@ -164,15 +174,15 @@ export function QuickAddModal({
           {/* If Debt, choose direction */}
           {entryType === "DEBT" && (
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-[var(--muted)]">Debt Direction</label>
+              <label className="text-xs font-medium text-[var(--muted)]">Direction</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setDebtType("RECEIVABLE")}
-                  className={`flex items-center justify-center gap-1.5 rounded-lg border p-2 text-xs font-medium transition-all ${
+                  className={`flex items-center justify-center gap-1.5 rounded-lg border p-2.5 text-xs font-medium transition-all active:scale-98 ${
                     debtType === "RECEIVABLE"
                       ? "border-emerald-600 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300 font-semibold"
-                      : "border-[var(--card-border)] bg-[var(--card)] text-[var(--muted)] hover:bg-[var(--muted-bg)]"
+                      : "border-[var(--card-border)] bg-[var(--background)] text-[var(--muted)]"
                   }`}
                 >
                   <ArrowDownLeft className="h-3.5 w-3.5" />
@@ -181,10 +191,10 @@ export function QuickAddModal({
                 <button
                   type="button"
                   onClick={() => setDebtType("PAYABLE")}
-                  className={`flex items-center justify-center gap-1.5 rounded-lg border p-2 text-xs font-medium transition-all ${
+                  className={`flex items-center justify-center gap-1.5 rounded-lg border p-2.5 text-xs font-medium transition-all active:scale-98 ${
                     debtType === "PAYABLE"
                       ? "border-amber-600 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-300 font-semibold"
-                      : "border-[var(--card-border)] bg-[var(--card)] text-[var(--muted)] hover:bg-[var(--muted-bg)]"
+                      : "border-[var(--card-border)] bg-[var(--background)] text-[var(--muted)]"
                   }`}
                 >
                   <ArrowUpRight className="h-3.5 w-3.5" />
@@ -205,31 +215,32 @@ export function QuickAddModal({
               )}
             </div>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-sm font-semibold text-[var(--muted)]">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-mono text-base font-semibold text-[var(--muted)]">
                 RM
               </span>
               <input
                 ref={amountInputRef}
                 type="text"
+                inputMode="decimal"
                 placeholder="0.00"
                 value={amountStr}
                 onChange={(e) => setAmountStr(e.target.value)}
-                className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] py-2 pl-10 pr-3 font-mono text-base font-semibold text-[var(--foreground)] placeholder:text-stone-400 focus:border-[var(--foreground)] focus:outline-hidden"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] py-2.5 pl-12 pr-3 font-mono text-lg font-bold text-[var(--foreground)] placeholder:text-stone-400 focus:border-[var(--foreground)] focus:outline-hidden"
                 required
               />
             </div>
           </div>
 
-          {/* If Debt, person name */}
+          {/* If Debt, contact name */}
           {entryType === "DEBT" && (
             <div className="space-y-1">
-              <label className="text-xs font-medium text-[var(--muted)]">Contact / Person Name</label>
+              <label className="text-xs font-medium text-[var(--muted)]">Contact / Person</label>
               <input
                 type="text"
                 placeholder="e.g. Ali, Sarah, John"
                 value={personName}
                 onChange={(e) => setPersonName(e.target.value)}
-                className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-xs text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-hidden"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-hidden"
                 required
               />
             </div>
@@ -242,7 +253,7 @@ export function QuickAddModal({
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-xs text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-hidden"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-hidden"
               >
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
@@ -253,15 +264,15 @@ export function QuickAddModal({
             </div>
           )}
 
-          {/* Date & Note in Grid */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {/* Date & Due Date */}
+          <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
             <div className="space-y-1">
               <label className="text-xs font-medium text-[var(--muted)]">Date</label>
               <input
                 type="date"
                 value={spentAt}
                 onChange={(e) => setSpentAt(e.target.value)}
-                className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-2.5 py-1.5 text-xs text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-hidden"
+                className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-hidden"
                 required
               />
             </div>
@@ -273,7 +284,7 @@ export function QuickAddModal({
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-2.5 py-1.5 text-xs text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-hidden"
+                  className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-hidden"
                 />
               </div>
             )}
@@ -281,17 +292,17 @@ export function QuickAddModal({
 
           {/* Note Input */}
           <div className="space-y-1">
-            <label className="text-xs font-medium text-[var(--muted)]">Note / Description</label>
+            <label className="text-xs font-medium text-[var(--muted)]">Note</label>
             <input
               type="text"
               placeholder={
                 entryType === "EXPENSE"
                   ? "e.g. Lunch at Nasi Kandar Pelita"
-                  : "e.g. Covered badminton court share"
+                  : "e.g. Covered badminton share"
               }
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-xs text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-hidden"
+              className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-hidden"
             />
           </div>
 
@@ -300,14 +311,14 @@ export function QuickAddModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-md border border-[var(--card-border)] px-3 py-1.5 text-xs font-medium text-[var(--muted)] hover:bg-[var(--muted-bg)] hover:text-[var(--foreground)]"
+              className="w-1/3 sm:w-auto rounded-lg border border-[var(--card-border)] py-2.5 px-3 text-xs font-medium text-[var(--muted)] hover:bg-[var(--muted-bg)] hover:text-[var(--foreground)]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-md bg-[var(--foreground)] px-4 py-1.5 text-xs font-medium text-[var(--background)] hover:opacity-90 disabled:opacity-50"
+              className="flex-1 sm:flex-initial rounded-lg bg-[var(--foreground)] py-2.5 px-5 text-xs font-medium text-[var(--background)] hover:opacity-90 active:scale-98 disabled:opacity-50"
             >
               {isSubmitting ? "Saving..." : entryType === "EXPENSE" ? "Record Expense" : "Record Debt"}
             </button>

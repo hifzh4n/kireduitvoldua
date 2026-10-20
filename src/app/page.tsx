@@ -10,6 +10,7 @@ import { ExpensesList } from "@/components/ExpensesList";
 import { DebtsList } from "@/components/DebtsList";
 import { CategoryBudgets } from "@/components/CategoryBudgets";
 import { QuickAddModal } from "@/components/QuickAddModal";
+import { Plus } from "lucide-react";
 
 export default function Home() {
   const [mounted, setMounted] = useState(false);
@@ -158,7 +159,7 @@ export default function Home() {
       />
 
       {/* Main Content Area */}
-      <main className="mx-auto flex-1 w-full max-w-5xl px-4 py-6 sm:px-6 space-y-6">
+      <main className="mx-auto flex-1 w-full max-w-5xl px-3.5 py-4 pb-28 sm:px-6 sm:py-6 sm:pb-8 space-y-4 sm:space-y-6">
         {/* Summary Metric Cards */}
         <SummaryCards
           totalExpensesSen={totalExpensesSen}
@@ -225,6 +226,15 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {/* Mobile Floating Action Button */}
+      <button
+        onClick={() => setIsQuickAddOpen(true)}
+        className="sm:hidden fixed bottom-6 right-5 z-40 flex h-13 w-13 items-center justify-center rounded-full bg-[var(--foreground)] text-[var(--background)] shadow-2xl active:scale-90 transition-transform"
+        aria-label="Add new entry"
+      >
+        <Plus className="h-6 w-6" />
+      </button>
 
       {/* Quick Add Modal */}
       <QuickAddModal

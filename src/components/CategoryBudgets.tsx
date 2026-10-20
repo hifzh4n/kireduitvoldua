@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { Category, Expense } from "@/types";
 import { formatMYR, parseMYRInput, fromSen } from "@/lib/money";
-import { Edit2, Check, X, Plus, PieChart, Sparkles } from "lucide-react";
+import { Edit2, Check, X, Plus } from "lucide-react";
 
 interface CategoryBudgetsProps {
   categories: Category[];
@@ -91,19 +91,19 @@ export function CategoryBudgets({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Top Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h2 className="text-sm font-semibold text-[var(--foreground)]">Monthly Category Budgets</h2>
+          <h2 className="text-sm font-semibold text-[var(--foreground)]">Monthly Budgets</h2>
           <p className="text-xs text-[var(--muted)]">
-            Set spending targets in RM to track against your expenses this month.
+            Category spending targets for this month.
           </p>
         </div>
 
         <button
           onClick={() => setIsNewCategoryOpen(true)}
-          className="flex items-center gap-1.5 rounded-md border border-[var(--card-border)] bg-[var(--card)] px-3 py-1.5 text-xs font-medium text-[var(--foreground)] hover:bg-[var(--muted-bg)]"
+          className="self-start sm:self-auto flex items-center gap-1.5 rounded-lg border border-[var(--card-border)] bg-[var(--card)] px-3 py-1.5 text-xs font-medium text-[var(--foreground)] hover:bg-[var(--muted-bg)] active:scale-95"
         >
           <Plus className="h-3.5 w-3.5" />
           <span>New Category</span>
@@ -111,7 +111,7 @@ export function CategoryBudgets({
       </div>
 
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 p-2.5 text-xs text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
           {error}
         </div>
       )}
@@ -120,27 +120,27 @@ export function CategoryBudgets({
       {isNewCategoryOpen && (
         <form
           onSubmit={handleCreateCategory}
-          className="flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-[var(--card)] p-3 shadow-xs"
+          className="flex items-center gap-2 rounded-xl border border-[var(--card-border)] bg-[var(--card)] p-3 shadow-xs"
         >
           <input
             type="text"
-            placeholder="Category name (e.g. Coffee, Tech, Fitness)"
+            placeholder="Category name (e.g. Coffee, Books)"
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
-            className="flex-1 rounded-md border border-[var(--card-border)] bg-[var(--background)] px-3 py-1.5 text-xs text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-hidden"
+            className="flex-1 rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus:border-[var(--foreground)] focus:outline-hidden"
             autoFocus
           />
           <button
             type="submit"
             disabled={isSaving}
-            className="rounded-md bg-[var(--foreground)] px-3 py-1.5 text-xs font-medium text-[var(--background)] hover:opacity-90"
+            className="rounded-lg bg-[var(--foreground)] px-3.5 py-2 text-xs font-medium text-[var(--background)] hover:opacity-90 active:scale-95"
           >
             Create
           </button>
           <button
             type="button"
             onClick={() => setIsNewCategoryOpen(false)}
-            className="rounded-md border border-[var(--card-border)] px-2.5 py-1.5 text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
+            className="rounded-lg border border-[var(--card-border)] px-3 py-2 text-xs text-[var(--muted)] hover:text-[var(--foreground)]"
           >
             Cancel
           </button>
@@ -148,7 +148,7 @@ export function CategoryBudgets({
       )}
 
       {/* Budgets Grid */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2.5 sm:gap-3 sm:grid-cols-2">
         {categoryStats.map((cat) => {
           const isEditing = editingCategoryId === cat.id;
           const isOverBudget = cat.budget_sen && cat.spentSen > cat.budget_sen;
@@ -161,7 +161,7 @@ export function CategoryBudgets({
           return (
             <div
               key={cat.id}
-              className="rounded-lg border border-[var(--card-border)] bg-[var(--card)] p-4 shadow-xs"
+              className="rounded-xl border border-[var(--card-border)] bg-[var(--card)] p-3.5 sm:p-4 shadow-xs"
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -179,8 +179,9 @@ export function CategoryBudgets({
                 {!isEditing && (
                   <button
                     onClick={() => handleStartEdit(cat)}
-                    className="rounded p-1 text-[var(--muted)] hover:bg-[var(--muted-bg)] hover:text-[var(--foreground)]"
+                    className="rounded-lg p-2 text-[var(--muted)] hover:bg-[var(--muted-bg)] hover:text-[var(--foreground)] active:scale-95"
                     title="Edit Monthly Budget"
+                    aria-label="Edit Monthly Budget"
                   >
                     <Edit2 className="h-3.5 w-3.5" />
                   </button>
@@ -212,7 +213,7 @@ export function CategoryBudgets({
                     </div>
 
                     {/* Progress Track */}
-                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--muted-bg)]">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--muted-bg)]">
                       <div
                         className={`h-full transition-all duration-300 ${
                           isOverBudget
@@ -244,24 +245,27 @@ export function CategoryBudgets({
                   <span className="font-mono text-xs text-[var(--muted)]">RM</span>
                   <input
                     type="text"
-                    placeholder="e.g. 500 (or blank to clear)"
+                    inputMode="decimal"
+                    placeholder="e.g. 500"
                     value={budgetInput}
                     onChange={(e) => setBudgetInput(e.target.value)}
-                    className="flex-1 rounded border border-[var(--card-border)] bg-[var(--background)] px-2 py-1 text-xs text-[var(--foreground)] focus:outline-hidden"
+                    className="flex-1 rounded-lg border border-[var(--card-border)] bg-[var(--background)] px-2.5 py-1.5 text-sm text-[var(--foreground)] focus:outline-hidden"
                     autoFocus
                   />
                   <button
                     onClick={() => handleSaveBudget(cat.id)}
                     disabled={isSaving}
-                    className="rounded bg-[var(--foreground)] p-1 text-[var(--background)] hover:opacity-90"
+                    className="rounded-lg bg-[var(--foreground)] p-2 text-[var(--background)] hover:opacity-90 active:scale-95"
                     title="Save"
+                    aria-label="Save"
                   >
                     <Check className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={() => setEditingCategoryId(null)}
-                    className="rounded p-1 text-[var(--muted)] hover:text-[var(--foreground)]"
+                    className="rounded-lg p-2 text-[var(--muted)] hover:text-[var(--foreground)] active:scale-95"
                     title="Cancel"
+                    aria-label="Cancel"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>

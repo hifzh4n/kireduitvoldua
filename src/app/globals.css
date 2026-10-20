@@ -47,6 +47,7 @@ body {
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Force tabular digits for all numerical and monetary readouts */
@@ -54,7 +55,16 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Subtle scrollbars */
+/* Clean scrollbar suppression for horizontal pill bars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Subtle standard scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

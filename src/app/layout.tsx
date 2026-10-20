@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,22 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Kireduit — Personal Money & Owe Tracker",
   description: "A calm, high-density personal expense and debt tracker for Malaysian Ringgit (MYR).",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Kireduit",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fbfbf9" },
+    { media: "(prefers-color-scheme: dark)", color: "#121315" },
+  ],
 };
 
 export default function RootLayout({

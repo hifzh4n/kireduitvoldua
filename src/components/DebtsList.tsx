@@ -66,61 +66,61 @@ export function DebtsList({
   const title = isReceivable ? "Who Owes Me" : "Who I Owe";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {/* Controls Bar */}
-      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         {/* Search */}
-        <div className="relative flex-1 sm:max-w-xs">
-          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted)]" />
+        <div className="relative w-full sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--muted)]" />
           <input
             type="text"
             placeholder="Search person or note..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-md border border-[var(--card-border)] bg-[var(--card)] py-1.5 pl-8 pr-3 text-xs text-[var(--foreground)] placeholder:text-stone-400 focus:border-[var(--foreground)] focus:outline-hidden"
+            className="w-full rounded-lg border border-[var(--card-border)] bg-[var(--card)] py-2 pl-9 pr-3 text-xs text-[var(--foreground)] placeholder:text-stone-400 focus:border-[var(--foreground)] focus:outline-hidden"
           />
         </div>
 
         {/* Status Toggle & Action */}
-        <div className="flex items-center justify-between gap-2 sm:justify-end">
-          <div className="flex items-center rounded-md border border-[var(--card-border)] bg-[var(--muted-bg)] p-0.5 text-xs">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center rounded-lg border border-[var(--card-border)] bg-[var(--muted-bg)] p-0.5 text-xs">
             <button
               onClick={() => setStatusFilter("UNSETTLED")}
-              className={`rounded px-2.5 py-1 font-medium transition-all ${
+              className={`rounded-md px-3 py-1.5 font-medium transition-all ${
                 statusFilter === "UNSETTLED"
                   ? "bg-[var(--card)] text-[var(--foreground)] shadow-xs font-semibold"
                   : "text-[var(--muted)] hover:text-[var(--foreground)]"
               }`}
             >
-              Active (Unsettled)
+              Active
             </button>
             <button
               onClick={() => setStatusFilter("SETTLED")}
-              className={`rounded px-2.5 py-1 font-medium transition-all ${
+              className={`rounded-md px-3 py-1.5 font-medium transition-all ${
                 statusFilter === "SETTLED"
                   ? "bg-[var(--card)] text-[var(--foreground)] shadow-xs font-semibold"
                   : "text-[var(--muted)] hover:text-[var(--foreground)]"
               }`}
             >
-              Settled History
+              Settled
             </button>
           </div>
 
           <button
             onClick={onOpenQuickAdd}
-            className="flex items-center gap-1 rounded-md bg-[var(--foreground)] px-2.5 py-1 text-xs font-medium text-[var(--background)] hover:opacity-90"
+            className="flex items-center gap-1 rounded-lg bg-[var(--foreground)] px-3 py-1.5 text-xs font-medium text-[var(--background)] hover:opacity-90 active:scale-95"
           >
             <Plus className="h-3.5 w-3.5" />
-            <span>Record Debt</span>
+            <span>Record</span>
           </button>
         </div>
       </div>
 
       {/* List */}
       {filteredDebts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--card-border)] bg-[var(--card)] p-12 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[var(--card-border)] bg-[var(--card)] p-8 sm:p-12 text-center">
           <div className="rounded-full bg-[var(--muted-bg)] p-3 text-[var(--muted)]">
-            <CheckCircle2 className="h-6 w-6" />
+            <CheckCircle2 className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
           <h3 className="mt-3 text-sm font-semibold text-[var(--foreground)]">
             {statusFilter === "UNSETTLED"
@@ -134,14 +134,14 @@ export function DebtsList({
               ? isReceivable
                 ? "Lent money to a friend or covered a group expense? Record it to keep track."
                 : "Borrowed money or someone paid for you? Record it so you remember to pay back."
-              : "Settled debts will appear here as a record once marked as paid."}
+              : "Settled debts will appear here once marked as paid."}
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-[var(--card-border)] bg-[var(--card)] shadow-xs">
-          <div className="flex items-center justify-between border-b border-[var(--card-border)] bg-[var(--muted-bg)] px-4 py-2 text-xs font-medium text-[var(--muted)]">
+        <div className="overflow-hidden rounded-xl border border-[var(--card-border)] bg-[var(--card)] shadow-xs">
+          <div className="flex items-center justify-between border-b border-[var(--card-border)] bg-[var(--muted-bg)]/80 px-4 py-2 text-xs font-medium text-[var(--muted)]">
             <span>
-              {title} &bull; {statusFilter === "UNSETTLED" ? "Active Obligations" : "Completed / Settled"}
+              {title} &bull; {statusFilter === "UNSETTLED" ? "Active" : "Settled"}
             </span>
             <span className="font-mono text-xs font-semibold text-[var(--foreground)] tabular-nums">
               Total: {formatMYR(totalFilteredSen)}
@@ -158,31 +158,31 @@ export function DebtsList({
               return (
                 <li
                   key={item.id}
-                  className="flex flex-col gap-2 p-4 transition-colors hover:bg-stone-50 sm:flex-row sm:items-center sm:justify-between dark:hover:bg-stone-900/40"
+                  className="flex flex-col gap-2.5 p-3.5 transition-colors hover:bg-stone-50 sm:flex-row sm:items-center sm:justify-between dark:hover:bg-stone-900/40"
                 >
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-[var(--foreground)]">
+                      <span className="font-semibold text-sm text-[var(--foreground)] truncate">
                         {item.person_name}
                       </span>
                       {item.status === "SETTLED" ? (
-                        <span className="inline-flex items-center gap-1 rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-medium text-stone-700 dark:bg-stone-800 dark:text-stone-300">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-medium text-stone-700 dark:bg-stone-800 dark:text-stone-300">
                           <CheckCircle2 className="h-3 w-3" />
                           Settled
                         </span>
                       ) : isOverdue ? (
-                        <span className="inline-flex items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950/60 dark:text-red-400">
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700 dark:bg-red-950/60 dark:text-red-400">
                           <AlertCircle className="h-3 w-3" />
                           Overdue
                         </span>
                       ) : null}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[var(--muted)]">
-                      {item.note && <span>{item.note}</span>}
+                    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-xs text-[var(--muted)]">
+                      {item.note && <span className="text-[var(--foreground)] truncate">{item.note}</span>}
                       {item.due_date && (
                         <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
+                          <Calendar className="h-3 w-3 shrink-0" />
                           Due: {item.due_date}
                         </span>
                       )}
@@ -191,7 +191,7 @@ export function DebtsList({
                   </div>
 
                   {/* Actions & Amount */}
-                  <div className="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t border-[var(--card-border)] sm:border-0">
+                  <div className="flex items-center justify-between sm:justify-end gap-2.5 pt-2 sm:pt-0 border-t border-[var(--card-border)] sm:border-0">
                     <span
                       className={`font-mono text-base font-bold tracking-tight tabular-nums ${
                         isReceivable
@@ -206,12 +206,12 @@ export function DebtsList({
                       <button
                         onClick={() => handleToggle(item.id, item.status)}
                         disabled={actionLoadingId === item.id}
-                        className={`flex items-center gap-1 rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+                        className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors active:scale-95 ${
                           item.status === "UNSETTLED"
                             ? "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60"
                             : "bg-[var(--muted-bg)] text-[var(--muted)] hover:text-[var(--foreground)]"
                         }`}
-                        title={item.status === "UNSETTLED" ? "Mark as fully settled" : "Reopen debt"}
+                        title={item.status === "UNSETTLED" ? "Mark as settled" : "Reopen debt"}
                       >
                         {item.status === "UNSETTLED" ? (
                           <>
@@ -229,8 +229,9 @@ export function DebtsList({
                       <button
                         onClick={() => handleDelete(item.id)}
                         disabled={actionLoadingId === item.id}
-                        className="rounded p-1 text-[var(--muted)] hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40 dark:hover:text-red-400"
-                        title="Delete debt record"
+                        className="rounded-lg p-1.5 text-[var(--muted)] hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/40 dark:hover:text-red-400 active:scale-95"
+                        title="Delete debt"
+                        aria-label="Delete debt"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
